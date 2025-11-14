@@ -44,12 +44,12 @@ from neopixel import NeoPixel
 import time
 
 # Configuration
-PIN = 5
+WS2812_PIN = 5
 NUM_LEDS = 64
 BRIGHTNESS = 0.2
 
 # Initialize
-np = NeoPixel(Pin(PIN), NUM_LEDS)
+np = NeoPixel(Pin(WS2812_PIN), NUM_LEDS)
 
 # Colors
 RED = (255, 0, 0)
