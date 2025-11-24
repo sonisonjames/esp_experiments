@@ -1,109 +1,168 @@
 """
 test_movement.py
 
-Simple motor control demo for a two-wire DC motor driver (H-bridge) using PWM.
+DRV8833 motor control helper for MicroPython
 
-Description
------------
-This script demonstrates basic forward/backward/stop control of a DC motor
-connected to an H-bridge driver. It provides small helper functions to set the
-motor direction and speed using two GPIO direction pins and one PWM-enabled
-enable pin.
+Overview
+--------
+Small, self-contained helper for controlling a single DC motor via a DRV8833
+dual H-bridge using two PWM-capable GPIO pins. The Motor class exposes simple
+methods to drive the motor forward, backward, stop (brake), and coast.
 
-Hardware wiring (example)
--------------------------
-- IN1  -> H-bridge input 1 (direction)
-- IN2  -> H-bridge input 2 (direction)
-- ENA  -> H-bridge enable / PWM input (speed control)
-- Motor outputs connected to the H-bridge motor terminals
-- Supply the H-bridge with an appropriate motor supply voltage and common
-  ground with the microcontroller.
+Driver / Hardware
+-----------------
+- Target driver: DRV8833 dual H-bridge.
+- The DRV8833 uses two logic inputs per motor (IN1, IN2). By driving these
+  inputs with complementary PWM signals you can control direction and speed.
+- Ensure the motor supply (VM) and microcontroller share a common ground.
+- Use appropriate decoupling and a power source capable of motor stall current.
+
+Wiring example
+- Microcontroller PWM-capable pin A -> DRV8833 IN1
+- Microcontroller PWM-capable pin B -> DRV8833 IN2
+- Motor connected to the DRV8833 motor outputs
+- VM -> motor supply (check DRV8833 voltage limits)
+- GND -> common ground with microcontroller
 
 Notes
 -----
-- PWM duty range differs by board/port in MicroPython:
-    - Some ports use 0..1023 (ESP32/ESP8266 legacy), others 0..65535 (RP2040).
-  Adjust ENA.duty(...) scaling to match your board if the motor is not moving
-  as expected.
-- Keep the motor power supply rating and wiring safe. Motors can draw high
-  stall currents—use appropriate wiring and protection.
+- MicroPython PWM duty resolution varies by port:
+    - ESP8266/ESP32 commonly use 0..1023 (this code uses that range).
+    - RP2040 and others may use 0..65535 — adjust duty scaling if needed.
+- Methods accept speed as a percentage (0..100).
+- brake (stop) sets both outputs low; coast sets both high (device-dependent).
+- This module is synchronous/blocking and intended for simple manual tests
+  and small projects.
+
+Example
+-------
+from test_movement import Motor
+m = Motor(in1_pin=25, in2_pin=26)
+m.forward(50)   # 50% forward
+time.sleep(1)
+m.stop()
 """
 from machine import Pin, PWM
 import time
 
-# Motor driver pins (change values to match your hardware)
-IN1 = Pin(18, Pin.OUT)   # Direction pin 1
-IN2 = Pin(19, Pin.OUT)   # Direction pin 2
-ENA = PWM(Pin(20))       # PWM pin for speed control (enable)
-
-# Configure PWM frequency for the motor driver (in Hz)
-ENA.freq(1000)  # 1 kHz is a common choice for motor control
-
-def motor_forward(speed):
+class Motor:
     """
-    Drive the motor forward at the requested speed.
+    Motor control abstraction for a single DRV8833-controlled motor.
+
+    Usage:
+        motor = Motor(in1_pin=25, in2_pin=26, freq=1000)
+        motor.forward(75)   # 75% forward
+        motor.backward(40)  # 40% reverse
+        motor.stop()        # active brake (both low)
+        motor.coast()       # coast (both high)
 
     Parameters:
-        speed (float): 0.0 .. 1.0 where 0.0 is stop and 1.0 is full speed.
+        in1_pin (int): GPIO pin number connected to DRV8833 IN1.
+        in2_pin (int): GPIO pin number connected to DRV8833 IN2.
+        freq (int): PWM frequency in Hz (default 1000).
 
     Behavior:
-        - Sets IN1 high and IN2 low to select the forward direction.
-        - Sets the PWM duty on ENA according to `speed`.
+        - The constructor configures two PWM objects and calls stop() to
+          ensure the motor is initially not driven.
+        - forward/backward accept `speed` as integer 0..100 (percentage).
+        - Internally speeds are scaled to a 0..1023 duty range (adjust if
+          your platform uses a different PWM resolution).
     """
-    IN1.value(1)
-    IN2.value(0)
+    def __init__(self, in1_pin, in2_pin, freq=1000):
+        """
+        Initialize PWM outputs for the motor and put the motor into stop state.
 
-    # Scale speed into PWM duty range (0..1023). If your board uses a
-    # different duty scale (e.g. 0..65535) change the multiplier.
-    ENA.duty(int(1023 * max(0.0, min(1.0, speed))))
+        Args:
+            in1_pin (int): pin number for IN1
+            in2_pin (int): pin number for IN2
+            freq (int): PWM frequency in Hz
+        """
+        self.in1 = PWM(Pin(in1_pin), freq=freq)
+        self.in2 = PWM(Pin(in2_pin), freq=freq)
+        self.stop()
+    
+    def forward(self, speed):
+        """
+        Rotate motor forward.
 
-def motor_backward(speed):
-    """
-    Drive the motor in reverse at the requested speed.
+        Args:
+            speed (int | float): 0..100 percentage of full speed.
 
-    Parameters:
-        speed (float): 0.0 .. 1.0 where 0.0 is stop and 1.0 is full reverse.
-    """
-    IN1.value(0)
-    IN2.value(1)
-    ENA.duty(int(1023 * max(0.0, min(1.0, speed))))
+        Notes:
+            - Values outside 0..100 are clamped.
+            - Speed is converted to PWM duty in 0..1023 range.
+        """
+        s = max(0.0, min(100.0, float(speed)))
+        duty = int((s / 100.0) * 1023)  # Convert to 0-1023 range
+        self.in1.duty(duty)
+        self.in2.duty(0)
+    
+    def backward(self, speed):
+        """
+        Rotate motor backward.
 
-def motor_stop():
-    """
-    Stop the motor immediately.
+        Args:
+            speed (int | float): 0..100 percentage of full speed.
+        """
+        s = max(0.0, min(100.0, float(speed)))
+        duty = int((s / 100.0) * 1023)
+        self.in1.duty(0)
+        self.in2.duty(duty)
+    
+    def stop(self):
+        """
+        Stop the motor using active braking.
 
-    Behavior:
-        - Sets both direction pins low and PWM duty to zero.
-    """
-    IN1.value(0)
-    IN2.value(0)
-    ENA.duty(0)
+        Behavior:
+            - Sets both PWM duties to 0 which results in both H-bridge inputs
+              low. On DRV8833 this commonly produces a braking effect.
+        """
+        self.in1.duty(0)
+        self.in2.duty(0)
+    
+    def coast(self):
+        """
+        Let the motor coast/free-spin.
 
-# Demo sequence to exercise the motor functions
-def demo_move():
-    """
-    Run a short demo sequence:
-      - forward at 80% for 2s
-      - backward at 80% for 2s
-      - stop for 1s
+        Behavior:
+            - Sets both PWM duties to max (1023) so both inputs are driven
+              high. On some drivers this disables braking and allows coasting.
+            - Device behaviour for coast/brake can vary; consult DRV8833 datasheet.
+        """
+        self.in1.duty(1023)
+        self.in2.duty(1023)
 
-    Intended for manual testing; call demo_move() from the REPL or run the
-    script directly.
-    """
-    print("Forward")
-    motor_forward(0.8)
-    time.sleep(2)
-
-    print("Backward")
-    motor_backward(0.8)
-    time.sleep(2)
-
-    print("Stop")
-    motor_stop()
-    time.sleep(1)
-
-# Run demo when executed as a script (prevents running on import)
+# Example usage as a script for manual testing
 if __name__ == "__main__":
-    # Running twice as in the original example
-    demo_move()
-    demo_move()
+    # Create motor object - adjust pin numbers to match your wiring
+    # Example: IN1 connected to GPIO 25, IN2 connected to GPIO 26
+    motor = Motor(in1_pin=25, in2_pin=26)
+    
+    print("Motor Test Starting...")
+    print("After each speed step, you'll be asked if the motor moved.")
+    print("Press Enter to continue to the next step.\n")
+    
+    # Test forward - increase speed in 10% steps
+    print("=== Forward Direction ===")
+    for speed in range(0, 101, 10):
+        print(f"Forward {speed}% speed")
+        motor.forward(speed)
+        input("Did the motor move? (Press Enter to continue): ")
+    
+    # Stop
+    print("\nStopping...")
+    motor.stop()
+    input("Motor stopped. Press Enter to test backward direction: ")
+    
+    # Test backward - increase speed in 10% steps
+    print("\n=== Backward Direction ===")
+    for speed in range(0, 101, 10):
+        print(f"Backward {speed}% speed")
+        motor.backward(speed)
+        input("Did the motor move? (Press Enter to continue): ")
+    
+    # Stop
+    print("\nStopping...")
+    motor.stop()
+    
+    print("\nTest complete!")
