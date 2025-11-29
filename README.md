@@ -1,1 +1,2 @@
 # esp_experiments
+A collection of experiments and projects using Espressif microcontrollers (ESP8266, ESP32, etc.). This repository contains various code examples, libraries, and documentation to help you get started with ESP-based development.
