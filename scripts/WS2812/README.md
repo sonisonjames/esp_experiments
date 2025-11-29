@@ -1,0 +1,2 @@
+# Overview
+This project demonstrates how to control a TT motor using an infrared (IR) remote control. The setup includes an IR receiver connected to a microcontroller, which interprets the signals from the remote and drives the TT motor accordingly.
