@@ -1,0 +1,3 @@
+# Overview
+This project demonstrates how to use a 0.96 inch OLED display with a microcontroller. The OLED display is connected via I2C interface, allowing for easy communication and control. The display can show text, graphics, and other information, making it suitable for various applications such as status displays, user interfaces, and more.
+The module is called GME12864-50. It is 0.96 inches in size and has a resolution of 128x64 pixels. The display uses the SSD1306 driver, which is widely supported and easy to use with various libraries.
