@@ -19,7 +19,7 @@ Requirements:
     included to allow static checking / local testing.
 
 Usage:
-  - Copy to `sensors/ir_module/scripts/simple_checker.py` on the device
+  - Copy to `components/ir_module/scripts/simple_checker.py` on the device
   - Run the script; press remote buttons or short S to GND to see changes
 
 Notes:

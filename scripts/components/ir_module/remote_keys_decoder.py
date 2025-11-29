@@ -1,6 +1,6 @@
 # python
 """
-sensors/ir_module/scripts/remote_keys_decoder.py
+components/ir_module/scripts/remote_keys_decoder.py
 
 IR Code Learner and NEC decoder for a microcontroller running MicroPython.
 
