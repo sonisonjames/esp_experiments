@@ -3,7 +3,7 @@ import ssd1306
 import time
 
 # Initialize I2C
-i2c = I2C(0, scl=Pin(22), sda=Pin(21))
+i2c = I2C(0, scl=Pin(22), sda=Pin(23))
 
 # Create OLED object
 oled = ssd1306.SSD1306_I2C(128, 64, i2c)

@@ -62,6 +62,30 @@ class SSD1306:
     def blit(self, fbuf, x, y):
         self.framebuf.blit(fbuf, x, y)
 
+    def clear(self):
+        self.fill(0)
+        self.show()
+
+    def big_text(oled, text, x, y, scale=2):
+        # scale = how many times bigger the text becomes (2, 3, 4, ...)
+        for i, ch in enumerate(text):
+            # draw each character separately
+            for col in range(8):
+                for row in range(8):
+                    # read pixel from small font buffer by drawing to a temp buffer
+                    temp = bytearray(8)
+                    fb = framebuf.FrameBuffer(temp, 8, 8, framebuf.MONO_VLSB)
+                    fb.text(ch, 0, 0)
+                    pixel = fb.pixel(col, row)
+
+                    if pixel:
+                        # draw bigger pixel block
+                        for dx in range(scale):
+                            for dy in range(scale):
+                                oled.pixel(x + i * 8 * scale + col * scale + dx,
+                                           y + row * scale + dy,
+                                           1)
+
 
 class SSD1306_I2C(SSD1306):
     def __init__(self, width, height, i2c, addr=0x3C, external_vcc=False):
