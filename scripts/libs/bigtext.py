@@ -4,6 +4,44 @@
 
 import framebuf
 
+def render_big_text_to_fb(text, scale=3):
+    """Return (fb, width, height) for a pre-rendered big text framebuffer."""
+    import framebuf
+
+    # Calculate required width
+    char_w = 8 * scale + scale
+    w = len(text) * char_w
+    h = 8 * scale
+
+    buf = bytearray((w * h) // 8)
+    fb = framebuf.FrameBuffer(buf, w, h, framebuf.MONO_VLSB)
+
+    # Fill blank
+    fb.fill(0)
+
+    # Temporary small fb for rendering 8x8 chars
+    temp_buf = bytearray(8)
+    temp_fb = framebuf.FrameBuffer(temp_buf, 8, 8, framebuf.MONO_VLSB)
+
+    cursor_x = 0
+    for ch in text:
+        for i in range(8):
+            temp_buf[i] = 0
+        temp_fb.fill(0)
+        temp_fb.text(ch, 0, 0, 1)
+
+        # scale into large fb
+        for row in range(8):
+            for col in range(8):
+                if temp_fb.pixel(col, row):
+                    for dy in range(scale):
+                        for dx in range(scale):
+                            fb.pixel(cursor_x + col*scale + dx, row*scale + dy, 1)
+
+        cursor_x += char_w
+
+    return fb, w, h
+
 def draw_big_text(oled, text, x=0, y=0, scale=3, spacing=1):
     """
     Draw `text` on `oled` at (x,y) using the built-in 8x8 font scaled up.
