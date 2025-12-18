@@ -1,29 +1,29 @@
 from irsensor import decode_nec, capture_transitions, keymap
-from ttmotor import Motor
+from machine import Pin, I2C
+import ssd1306
+from bigtext import centered_big_text, render_big_text_to_fb
 import time
 
 
-def run_motor(motor, speed, direction):
-    if direction == "FWD":
-        print(f"Forward {speed}% speed")
-        motor.forward(speed)
-    elif direction == "REV":
-        print(f"Backward {speed}% speed")
-        motor.backward(-speed)
-    elif direction == "STOP":
-        print("\nStopping...")
-        motor.stop()
-
-print("This is new code")
-
+# I2C pins for typical ESP32
+i2c = I2C(0, scl=Pin(22), sda=Pin(23))
+oled = ssd1306.SSD1306_I2C(128, 64, i2c)
+scale = 2
 speed = 0
-direction = "FWD"
-motor = Motor(in1_pin=25, in2_pin=26)
+direction = "STOP"
+
+def update_display(direction, speed, scale=3):
+    oled.fill(0)
+    centered_big_text(oled, "SPEED:", scale)
+    speed_str = "{}".format(abs(speed))
+    centered_big_text(oled, speed_str, scale)
+    #centered_big_text(oled, direction, scale)
+    oled.show()
 
 while True:
-    run_motor(motor, speed, direction)
     trans = capture_transitions()
     code = decode_nec(trans)
+    update_display(direction, speed, scale)
     if not code:
         continue
 
@@ -66,5 +66,4 @@ while True:
         # Unknown/unmapped code: print in hex for debugging or learning new keys
         print("Unknown code:", hex(code))
 
-    
     time.sleep_ms(200)

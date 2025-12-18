@@ -3,6 +3,7 @@ import ssd1306
 import time
 from bigtext import centered_big_text, render_big_text_to_fb
 
+
 # I2C pins for typical ESP32
 i2c = I2C(0, scl=Pin(22), sda=Pin(23))
 oled = ssd1306.SSD1306_I2C(128, 64, i2c)
