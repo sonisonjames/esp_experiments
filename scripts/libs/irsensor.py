@@ -94,7 +94,7 @@ keymap = {
 }
 
 # --- NEC decoder functions ---
-def capture_transitions():
+def capture_transitions(timeout_ms=200):
     """
     Capture a sequence of (level, duration_us) transitions from the IR input pin.
 
@@ -111,8 +111,12 @@ def capture_transitions():
         - This is a polling-based capture and will block the interpreter while
           running. Avoid calling from time-critical tasks.
     """
+    # 1. Wait for signal with a timeout
+    start_wait = time.ticks_ms()
     while ir.value() == 1:
-        pass
+        if time.ticks_diff(time.ticks_ms(), start_wait) > timeout_ms:
+            return None  # No key pressed within the timeout
+    # 2. Key detected! Now capture the burst
     transitions = []
     last = 0
     last_t = time.ticks_us()
@@ -125,7 +129,7 @@ def capture_transitions():
             transitions.append((last, dur))
             last = v
             last_t = now
-        time.sleep_us(30)
+        time.sleep_us(20)
     now = time.ticks_us()
     transitions.append((last, time.ticks_diff(now, last_t)))
     return transitions
@@ -178,3 +182,37 @@ def decode_nec(trans):
         val = (val << 1) | b
     return val
 
+def get_key_pressed():
+    data = capture_transitions(timeout_ms=500)
+    if not data:
+        return None  # No key pressed
+
+    cmd = decode_nec(data)
+    if cmd is None:
+        return None  # Could not decode
+
+    if cmd == 0xFFFFFFFF:
+        return "REPEAT"  # NEC repeat code
+
+    return keymap.get(cmd, hex(cmd))  # Return label or hex code for unknown
+
+def listen_for_keys():
+    print("Listening for IR signals...")
+    while True:
+        data = capture_transitions(timeout_ms=500)
+
+        if data:
+            # Here you would call your decoding function
+            # Example: cmd = decode_nec(data)
+            print(f"Captured {len(data)} transitions")
+
+            # If the length is very short (e.g., < 10 transitions),
+            # it's likely an NEC Repeat Code.
+            if 3 <= len(data) <= 6:
+                print("Key is being HELD")
+            else:
+                print("New Key PRESSED")
+        else:
+            # This triggers if 500ms pass without any IR activity
+            # Use this to reset "hold" states in your logic
+            pass

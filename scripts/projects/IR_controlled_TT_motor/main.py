@@ -1,4 +1,4 @@
-from irsensor import decode_nec, capture_transitions, keymap
+from irsensor import decode_nec, capture_transitions, keymap, get_key_pressed
 from ttmotor import Motor
 import time
 
@@ -22,6 +22,10 @@ motor = Motor(in1_pin=25, in2_pin=26)
 
 while True:
     run_motor(motor, speed, direction)
+    key = get_key_pressed()
+    print("key pressed:", key)
+    continue
+
     trans = capture_transitions()
     code = decode_nec(trans)
     if not code:
