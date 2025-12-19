@@ -70,6 +70,7 @@ import time
 PIN_NUM = 13          # HX1838 signal pin (GPIO number)
 MAX_WINDOW_MS = 200   # Maximum capture window (ms) for a single IR frame
 ir = Pin(PIN_NUM, Pin.IN, Pin.PULL_UP)
+last_valid_key = None
 
 # === Your learned IR codes ===
 # Map of 32-bit NEC codes (as integers) to human-readable button labels.
@@ -183,18 +184,22 @@ def decode_nec(trans):
     return val
 
 def get_key_pressed():
+    global last_valid_key
     data = capture_transitions(timeout_ms=500)
     if not data:
         return None  # No key pressed
 
-    cmd = decode_nec(data)
-    if cmd is None:
-        return None  # Could not decode
+    cmd = None
+    if 3 <= len(data) <= 8:
+        print("Key is being HELD:", last_valid_key)
+    elif len(data) > 8:
+        cmd = decode_nec(data)
+        if cmd is None:
+            print("Failed to decode NEC frame")
+            return None
+        last_valid_key = keymap.get(cmd, hex(cmd))
 
-    if cmd == 0xFFFFFFFF:
-        return "REPEAT"  # NEC repeat code
-
-    return keymap.get(cmd, hex(cmd))  # Return label or hex code for unknown
+    return last_valid_key  # Return label or hex code for unknown
 
 def listen_for_keys():
     print("Listening for IR signals...")
@@ -208,7 +213,7 @@ def listen_for_keys():
 
             # If the length is very short (e.g., < 10 transitions),
             # it's likely an NEC Repeat Code.
-            if 3 <= len(data) <= 6:
+            if 3 <= len(data) <= 8:
                 print("Key is being HELD")
             else:
                 print("New Key PRESSED")

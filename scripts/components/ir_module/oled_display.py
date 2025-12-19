@@ -1,4 +1,4 @@
-from irsensor import decode_nec, capture_transitions, keymap
+from irsensor import decode_nec, capture_transitions, keymap, get_key_pressed, listen_for_keys
 from machine import Pin, I2C
 import ssd1306
 from bigtext import centered_big_text, render_big_text_to_fb
@@ -36,6 +36,10 @@ def update_display(direction, speed, scale=3):
 
 while True:
     update_display(direction, speed, scale)
+    key = get_key_pressed()
+    print("Pressed key:", key)
+    continue
+
     trans = capture_transitions()
     code = decode_nec(trans)
     update_display(direction, speed, scale)
