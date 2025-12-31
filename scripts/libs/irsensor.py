@@ -189,7 +189,6 @@ def get_key_pressed():
     if not data:
         return None  # No key pressed
 
-    cmd = None
     if 3 <= len(data) <= 8:
         print("Key is being HELD:", last_valid_key)
     elif len(data) > 8:

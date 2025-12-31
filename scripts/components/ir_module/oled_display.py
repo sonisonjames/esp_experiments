@@ -37,71 +37,65 @@ def update_display(direction, speed, scale=3):
 while True:
     update_display(direction, speed, scale)
     key = get_key_pressed()
-    print("Pressed key:", key)
-    continue
-
-    trans = capture_transitions()
-    code = decode_nec(trans)
-    update_display(direction, speed, scale)
-    if not code:
+    if key != None:
+        print("Pressed key:", key)
+    else:
         continue
 
-    if code in keymap:
-        print("Button pressed:", keymap[code])
-        if code == 0xFFA25D:
-            speed = 10
-        elif code == 0xFF629D:
-            speed = 20
-        elif code == 0xFFE21D:
-            speed = 30
-        elif code == 0xFF22DD:
-            speed = 40
-        elif code == 0xFF02FD:
-            speed = 50
-        elif code == 0xFFC23D:
-            speed = 60
-        elif code == 0xFFE01F:
-            speed = 70
-        elif code == 0xFFA857:
-            speed = 80
-        elif code == 0xFF906F:
-            speed = 90
-        elif code == 0xFF9867:
-            speed = 100
-        elif code == 0xFF38C7: # OK/STOP
-            direction = 0
-            speed = 0
-        elif code == 0xFFB04F:  # HASH/Accelerate
-            if speed < 100:
-                speed = speed + 10
-        elif code == 0xFF6897:  # STAR/Decelerate
-            if speed > 0:
-                speed = speed - 10
-        elif code == 0xFF18E7: # UP
-            if direction > 0:
-                direction = direction - 10
-            elif direction < 0:
-                direction = direction + 10
-        elif code == 0xFF4AB5: # DOWN
-            if 0 <= direction < 180:
-                direction = direction + 10
-            elif -180 < direction < 0:
-                direction = direction - 10
-        elif code == 0xFF10EF: # LEFT
-            if -180 <= direction < 90:
-                direction = direction + 10
-            elif 180 <= direction < 90:
-                direction = direction - 10
-        elif code == 0xFF5AA5: # RIGHT
-            if 180 >= direction > -90:
-                direction = direction - 10
-            elif -180 <= direction < -90:
-                direction = direction + 10
-    elif code == 0xFFFFFFFF:
-        # NEC repeat code (indicates the previous key is being held)
-        print("(repeat)")
+    if key == '1':
+        speed  = 10
+    elif key == '2':
+        speed  = 20
+    elif key == '3':
+        speed  = 30
+    elif key == '4':
+        speed  = 40
+    elif key == '5':
+        speed  = 50
+    elif key == '6':
+        speed  = 60
+    elif key == '7':
+        speed  = 70
+    elif key == '8':
+        speed  = 80
+    elif key == '9':
+        speed  = 90
+    elif key == '0':
+        speed  = 100
+    elif key == 'OK': # OK/STOP, reset speed to 0 and direction to 0
+        direction = 0
+        speed = 0
+    elif key == '#': # HASH/Accelerate
+        if speed < 100:
+            speed = speed + 10
+    elif key == '*': # STAR/Decelerate
+        if speed > 0:
+            speed = speed - 10
+    elif key == 'UP': # UP
+        if direction > 0:
+            direction = direction - 10
+        elif direction < 0:
+            direction = direction + 10
+    elif key == 'DOWN': # DOWN
+        if 0 <= direction < 180:
+            direction = direction + 10
+        elif -180 < direction < 0:
+            direction = direction - 10
+    elif key == 'LEFT': # LEFT
+        if direction == -180:
+            # flip direction for faster turning
+            direction = 180
+        if -180 < direction < 90:
+            direction = direction + 10
+        elif 180 <= direction < 90:
+            direction = direction - 10
+    elif key == 'RIGHT': # RIGHT
+        if 180 >= direction > -90:
+            direction = direction - 10
+        elif -180 <= direction < -90:
+            direction = direction + 10
     else:
         # Unknown/unmapped code: print in hex for debugging or learning new keys
-        print("Unknown code:", hex(code))
+        print("Unknown key:", key)
 
     time.sleep_ms(200)
