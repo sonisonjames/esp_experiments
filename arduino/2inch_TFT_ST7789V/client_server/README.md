@@ -4,7 +4,8 @@
 3. client_3 and server_3: Send a wireframe 3D cube from the PC to the TFT - better formed cube
 4. client_4 and server_4: Send a pyramid 3D cube from the PC to the TFT
 5. client_5 and server_5: Send a pyramid 3d wireframe w/o flicker
-6. client_6 and server_6: Send a pyramid 3D solid cube from the PC to the TFT, but it stil flickers
+6. client_6 and server_6: Send a pyramid 3D solid cube from the PC to the TFT, but it still flickers
+7. client_7 and server_7: Send a pyramid 3D solid cube from  the PC to the TFT, smooth and no flicker
 # Client side
 Find your Arduino libraries folder (usually Documents/Arduino/libraries/TFT_eSPI/) and open User_Setup.h. Comment out any existing defines and add/uncomment these specific lines:
 ```
