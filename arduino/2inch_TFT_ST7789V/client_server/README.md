@@ -7,6 +7,8 @@
 6. client_6 and server_6: Send a pyramid 3D solid cube from the PC to the TFT, but it still flickers
 7. client_7 and server_7: Send a pyramid 3D solid cube from  the PC to the TFT, smooth and no flicker
 8. client_8 and server_8: Send a larger pyramid 3D solid cube from  the PC to the TFT, smooth and no flicker
+9. client_9 and server_9: Genric rendering engine to send any 3D solid object from the PC to the TFT, smooth and no flicker
+10. client_10 and server_10: Generic rendering engine to send any 3D solid object with rotation from the PC to the TFT, smooth and no flicker
 
 # Client side
 Find your Arduino libraries folder (usually Documents/Arduino/libraries/TFT_eSPI/) and open User_Setup.h. Comment out any existing defines and add/uncomment these specific lines:
