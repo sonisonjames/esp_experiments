@@ -21,3 +21,8 @@ First install the required Python packages:
 ```
 pip install pygame PyOpenGL PyOpenGL_accelerate pyserial numpy
 ```
+
+# How to run the client and server
+client_n communicates with server_n
+where n is the same number on both sides.
+For example client_1 with server_1, client_2 with server_2, etc
