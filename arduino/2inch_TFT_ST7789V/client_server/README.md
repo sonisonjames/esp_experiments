@@ -10,6 +10,7 @@
 9. client_9 and server_9: Genric rendering engine to send any 3D solid object from the PC to the TFT, smooth and no flicker
 10. client_10 and server_10: Generic rendering engine to send any 3D solid object with rotation from the PC to the TFT, smooth and no flicker
 11. client_11 and server_11: Generic rendering engine to send rendered image from the PC to the TFT
+12. client_12 and server_12: Generic rendering engine to send rendered image from the PC to the TFT
 
 # Client side
 Find your Arduino libraries folder (usually Documents/Arduino/libraries/TFT_eSPI/) and open User_Setup.h. Comment out any existing defines and add/uncomment these specific lines:
