@@ -17,7 +17,7 @@
 | **GND** | Ground | | **VP / GPIO 36** | ADC |
 | **VIN** | 5V Power | | **EN** | Reset |
 
-![img.png](img.png)
+![img.png](esp32 pinout.png)
 
 # Wiring for 4-inch Touch Display with ST7796S Controller and XPT2046 Touch Controller
 
