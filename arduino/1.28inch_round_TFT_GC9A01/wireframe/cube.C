@@ -1,7 +1,17 @@
-#include <TFT_eSPI.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_GC9A01A.h>
+#include <SPI.h>
 
+#define TFT_CS   4
+#define TFT_DC   16
+#define TFT_RST  17
+#define TFT_SCL  18
+#define TFT_MOSI 5
 
-TFT_eSPI tft = TFT_eSPI();
+Adafruit_GC9A01A tft(TFT_CS, TFT_DC, TFT_RST);
+
+#define BLACK 0x0000
+#define GREEN 0x07E0
 
 // Cube Vertices
 float nodes[8][3] = {
@@ -18,10 +28,10 @@ int old_px[8], old_py[8];
 float angleX = 0, angleY = 0;
 
 void setup() {
-  tft.init();
-  tft.setRotation(0);
-  tft.invertDisplay(true);
-  tft.fillScreen(TFT_BLACK);
+  SPI.begin(TFT_SCL, -1, TFT_MOSI, TFT_CS);
+  tft.begin();
+  tft.setRotation(2);
+  tft.fillScreen(BLACK);
 }
 
 void loop() {
@@ -50,12 +60,12 @@ void loop() {
 
   // 2. Erase Old Cube (Draw the old edges in Black)
   for (int i = 0; i < 12; i++) {
-    tft.drawLine(old_px[edges[i][0]], old_py[edges[i][0]], old_px[edges[i][1]], old_py[edges[i][1]], TFT_BLACK);
+    tft.drawLine(old_px[edges[i][0]], old_py[edges[i][0]], old_px[edges[i][1]], old_py[edges[i][1]], BLACK);
   }
 
   // 3. Draw New Cube (Draw the current edges in Green)
   for (int i = 0; i < 12; i++) {
-    tft.drawLine(px[edges[i][0]], py[edges[i][0]], px[edges[i][1]], py[edges[i][1]], TFT_GREEN);
+    tft.drawLine(px[edges[i][0]], py[edges[i][0]], px[edges[i][1]], py[edges[i][1]], GREEN);
   }
 
   // 4. Update "Old" coordinates for the next loop
