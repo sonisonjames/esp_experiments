@@ -4,16 +4,6 @@
  * Library: Adafruit GC9A01A + Adafruit GFX
  * Display: 1.28" 240x240 Round TFT LCD
  *
- * Wiring (ESP32):
- * GC9A01 Pin -> ESP32 Pin
- * VCC  -> 3.3V
- * GND  -> GND
- * SCL  -> GPIO 18 (SPI Clock - SCK)
- * SDA  -> GPIO 23 (SPI Data - MOSI)
- * RST  -> GPIO 4  (Reset)
- * DC   -> GPIO 2  (Data/Command)
- * CS   -> GPIO 5  (Chip Select)
- * BL   -> 3.3V (Backlight - optional 100Ω resistor)
  */
 
 #include <Adafruit_GFX.h>
@@ -21,9 +11,11 @@
 #include <SPI.h>
 
 // Pin definitions - matching your wiring
-#define TFT_CS   5   // Chip Select
-#define TFT_DC   2   // Data/Command
-#define TFT_RST  4   // Reset
+#define TFT_CS   4   // Chip Select
+#define TFT_DC   16  // Data/Command
+#define TFT_RST  17  // Reset
+#define TFT_SCL  18   
+#define TFT_MOSI 5   // Aka SDA
 
 // Create display object
 Adafruit_GC9A01A tft(TFT_CS, TFT_DC, TFT_RST);
@@ -43,7 +35,7 @@ void setup() {
   Serial.println("GC9A01 Hello World Test");
 
   // Initialize SPI with custom pins
-  SPI.begin(18, -1, 23, 4);  // SCK=18, MISO=-1(not used), MOSI=23, SS=4
+  SPI.begin(TFT_SCL, -1, TFT_MOSI, TFT_CS);  // SCK=TFT_SCL, MISO=-1(not used), MOSI=TFT_MOSI, SS=TFT_CS
 
   // Initialize display
   tft.begin();
