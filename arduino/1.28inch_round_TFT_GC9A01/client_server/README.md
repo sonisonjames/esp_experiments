@@ -1,8 +1,8 @@
-# GC9A01 Random Word Demo
+# GC9A01 Display Demo
 
-This example sends a new word, position, and color from a Windows Rust server to an ESP32 using the GC9A01 round TFT.
+This example sends text or a static full-screen cartoon from a Windows Rust server to an ESP32 using the GC9A01 round TFT.
 
-The server chooses the random word, position, and color. The ESP32 only receives and displays the values every five seconds.
+The server chooses the random word, position, and color for text mode. Image mode sends one original mouse-like cartoon as a 240x240 RGB565 frame; the ESP32 displays it once and keeps it static.
 
 ## Required TFT_eSPI macros
 
@@ -26,7 +26,7 @@ Add these to `C:\Users\sonis\OneDrive\Documents\Arduino\libraries\TFT_eSPI\User_
 
 ## Files in this folder
 
-- `esp32_gc9a01_stream_client.ino` - ESP32 random word display sketch
+- `esp32_gc9a01_stream_client.ino` - ESP32 network display client
 - `server/` - Rust TCP server
 
 ## Protocol
@@ -45,6 +45,16 @@ cargo build --release
 The `random` command sends a new word, location, and color every five seconds. Use `random --repeat 10` for ten messages. The server listens on TCP port 9001.
 
 For a fixed-message connection, use `text "Hello"`.
+
+For the static full-screen cartoon, use:
+
+```bash
+.\target\release\gc9a01_tcp_server.exe image
+```
+
+The image is sent once at 240x240. The ESP32 receives it in small 8-row chunks, displays it, and holds the image on the TFT. This avoids requiring a full 115 KB framebuffer in ESP32 RAM.
+
+After changing the sketch, upload the new firmware to the ESP32. The message `Could not allocate image buffer` belongs to the previous full-frame-buffer implementation and should no longer appear.
 
 ## ESP32 setup
 

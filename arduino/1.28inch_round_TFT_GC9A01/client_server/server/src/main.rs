@@ -79,62 +79,52 @@ fn generate_cartoon(width: usize, height: usize) -> Vec<u8> {
     let pixel_count = width * height;
     let mut pixels: Vec<u16> = vec![0; pixel_count];
 
-    // sky gradient
+    // Fill the full panel with a simple dusk background.
     for y in 0..height {
-        let g = (50 + (y as f32 * 0.3) as i32).clamp(0, 255) as u8;
+        let red = (18 + (y as u32 * 18 / height as u32)) as u8;
+        let green = (28 + (y as u32 * 22 / height as u32)) as u8;
         for x in 0..width {
             let idx = y * width + x;
-            pixels[idx] = rgb888_to_rgb565(100, g, 200);
+            pixels[idx] = rgb888_to_rgb565(red, green, 65);
         }
     }
 
-    // ground
-    draw_rect(&mut pixels, 0, height - height / 3, width, height / 3, width, height, rgb888_to_rgb565(100, 180, 80));
+    let dark = rgb888_to_rgb565(20, 16, 25);
+    let fur = rgb888_to_rgb565(75, 48, 38);
+    let inner_ear = rgb888_to_rgb565(155, 82, 68);
+    let muzzle = rgb888_to_rgb565(218, 164, 116);
+    let shirt = rgb888_to_rgb565(40, 120, 170);
+    let shoe = rgb888_to_rgb565(235, 190, 52);
+    let white = rgb888_to_rgb565(245, 245, 235);
 
-    // simple clouds
-    let cloud_y = 15;
-    draw_circle(&mut pixels, 30, cloud_y, 12, width, height, rgb888_to_rgb565(255, 255, 255));
-    draw_circle(&mut pixels, 45, cloud_y + 2, 10, width, height, rgb888_to_rgb565(255, 255, 255));
-    draw_circle(&mut pixels, width as i32 - 50, cloud_y, 14, width, height, rgb888_to_rgb565(255, 255, 255));
-    draw_circle(&mut pixels, width as i32 - 35, cloud_y + 3, 11, width, height, rgb888_to_rgb565(255, 255, 255));
+    // Original mouse-like character: large ears, round muzzle, bright shirt.
+    let center_x = (width / 2) as i32;
+    draw_circle(&mut pixels, center_x, 68, 55, width, height, fur);
+    draw_circle(&mut pixels, center_x - 48, 38, 32, width, height, fur);
+    draw_circle(&mut pixels, center_x + 48, 38, 32, width, height, fur);
+    draw_circle(&mut pixels, center_x - 48, 38, 19, width, height, inner_ear);
+    draw_circle(&mut pixels, center_x + 48, 38, 19, width, height, inner_ear);
 
-    // character: simple head
-    let head_x = (width / 2) as i32;
-    let head_y = (height / 2) as i32;
-    draw_circle(&mut pixels, head_x, head_y, 18, width, height, rgb888_to_rgb565(240, 200, 160));
+    draw_circle(&mut pixels, center_x, 88, 34, width, height, muzzle);
+    draw_circle(&mut pixels, center_x, 68, 9, width, height, dark);
+    draw_circle(&mut pixels, center_x - 21, 63, 8, width, height, white);
+    draw_circle(&mut pixels, center_x + 21, 63, 8, width, height, white);
+    draw_circle(&mut pixels, center_x - 21, 63, 3, width, height, dark);
+    draw_circle(&mut pixels, center_x + 21, 63, 3, width, height, dark);
+    draw_circle(&mut pixels, center_x, 99, 5, width, height, dark);
+    draw_rect(&mut pixels, (center_x - 22) as usize, 111, 44, 5, width, height, dark);
 
-    // ears
-    draw_circle(&mut pixels, head_x - 15, head_y - 15, 8, width, height, rgb888_to_rgb565(240, 200, 160));
-    draw_circle(&mut pixels, head_x + 15, head_y - 15, 8, width, height, rgb888_to_rgb565(240, 200, 160));
-
-    // eyes
-    let eye_y = ((head_y - 5).max(0) as usize).min(height - 1);
-    draw_rect(&mut pixels, (head_x - 10) as usize, eye_y, 5, 6, width, height, rgb888_to_rgb565(20, 20, 20));
-    draw_rect(&mut pixels, (head_x + 5) as usize, eye_y, 5, 6, width, height, rgb888_to_rgb565(20, 20, 20));
-
-    // mouth - smile
-    let mouth_y = ((head_y + 8).max(0) as usize).min(height - 1);
-    draw_rect(&mut pixels, (head_x - 7) as usize, mouth_y, 14, 3, width, height, rgb888_to_rgb565(220, 100, 100));
-
-    // body
-    let body_y = head_y + 22;
-    let body_y_u = ((body_y).max(0) as usize).min(height - 1);
-    draw_rect(&mut pixels, (head_x - 8) as usize, body_y_u, 16, 20, width, height, rgb888_to_rgb565(200, 80, 40));
-
-    // arms
-    let arm_y_u = ((body_y + 2).max(0) as usize).min(height - 1);
-    draw_rect(&mut pixels, (head_x - 16) as usize, arm_y_u, 8, 12, width, height, rgb888_to_rgb565(240, 200, 160));
-    draw_rect(&mut pixels, (head_x + 8) as usize, arm_y_u, 8, 12, width, height, rgb888_to_rgb565(240, 200, 160));
-
-    // legs
-    let leg_y_u = ((body_y + 20).max(0) as usize).min(height - 1);
-    draw_rect(&mut pixels, (head_x - 6) as usize, leg_y_u, 4, 12, width, height, rgb888_to_rgb565(60, 40, 20));
-    draw_rect(&mut pixels, (head_x + 2) as usize, leg_y_u, 4, 12, width, height, rgb888_to_rgb565(60, 40, 20));
-
-    // feet
-    let feet_y_u = ((body_y + 32).max(0) as usize).min(height - 1);
-    draw_rect(&mut pixels, (head_x - 8) as usize, feet_y_u, 8, 3, width, height, rgb888_to_rgb565(40, 30, 20));
-    draw_rect(&mut pixels, (head_x) as usize, feet_y_u, 8, 3, width, height, rgb888_to_rgb565(40, 30, 20));
+    // Body, arms, legs, and oversized shoes fill the lower half of the panel.
+    draw_circle(&mut pixels, center_x, 163, 51, width, height, shirt);
+    draw_rect(&mut pixels, (center_x - 44) as usize, 148, 88, 48, width, height, shirt);
+    draw_rect(&mut pixels, (center_x - 76) as usize, 145, 30, 16, width, height, fur);
+    draw_rect(&mut pixels, (center_x + 46) as usize, 145, 30, 16, width, height, fur);
+    draw_circle(&mut pixels, center_x - 82, 153, 12, width, height, muzzle);
+    draw_circle(&mut pixels, center_x + 82, 153, 12, width, height, muzzle);
+    draw_rect(&mut pixels, (center_x - 28) as usize, 190, 18, 27, width, height, fur);
+    draw_rect(&mut pixels, (center_x + 10) as usize, 190, 18, 27, width, height, fur);
+    draw_circle(&mut pixels, center_x - 29, 219, 23, width, height, shoe);
+    draw_circle(&mut pixels, center_x + 29, 219, 23, width, height, shoe);
 
     let mut bytes = Vec::with_capacity(pixel_count * 2);
     for p in pixels.iter() {

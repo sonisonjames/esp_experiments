@@ -9,6 +9,10 @@ const char* password = "YOUR_WIFI_PASSWORD";
 const char* host = "192.168.68.53";
 const uint16_t port = 9001;
 const uint8_t textHeaderSize = 14;
+const uint16_t screenWidth = 240;
+const uint16_t screenHeight = 240;
+const uint16_t imageChunkPixels = 240 * 8;
+uint16_t imageChunk[imageChunkPixels];
 
 bool readExact(uint8_t* buffer, size_t length) {
   size_t received = 0;
@@ -59,23 +63,35 @@ void loop() {
     Serial.println("Connected to server");
   }
 
-  uint8_t header[textHeaderSize];
-  if (!readExact(header, textHeaderSize)) {
+  uint8_t magic[4];
+  if (!readExact(magic, sizeof(magic))) {
     Serial.println("Server connection lost");
     client.stop();
     return;
   }
 
-  if (header[0] != 'T' || header[1] != 'X' || header[2] != 'T' || header[3] != '1') {
-    Serial.println("Invalid text packet");
+  if (magic[0] == 'I' && magic[1] == 'M' && magic[2] == 'G' && magic[3] == '1') {
+    handleImagePacket();
+    return;
+  }
+
+  if (magic[0] != 'T' || magic[1] != 'X' || magic[2] != 'T' || magic[3] != '1') {
+    Serial.println("Invalid packet");
     client.stop();
     return;
   }
 
-  uint16_t textLength = (uint16_t)header[4] | ((uint16_t)header[5] << 8);
-  uint16_t x = (uint16_t)header[8] | ((uint16_t)header[9] << 8);
-  uint16_t y = (uint16_t)header[10] | ((uint16_t)header[11] << 8);
-  uint16_t color = (uint16_t)header[12] | ((uint16_t)header[13] << 8);
+  uint8_t header[textHeaderSize - 4];
+  if (!readExact(header, sizeof(header))) {
+    Serial.println("Failed to read text header");
+    client.stop();
+    return;
+  }
+
+  uint16_t textLength = (uint16_t)header[0] | ((uint16_t)header[1] << 8);
+  uint16_t x = (uint16_t)header[4] | ((uint16_t)header[5] << 8);
+  uint16_t y = (uint16_t)header[6] | ((uint16_t)header[7] << 8);
+  uint16_t color = (uint16_t)header[8] | ((uint16_t)header[9] << 8);
 
   if (textLength == 0 || textLength > 64 || x >= 240 || y >= 240) {
     Serial.println("Invalid text packet data");
@@ -96,5 +112,44 @@ void loop() {
   tft.setTextColor(color, TFT_BLACK);
   tft.drawString(text, x, y);
   Serial.printf("Displayed %s at (%u, %u), color 0x%04X\n", text, x, y, color);
+}
+
+void handleImagePacket() {
+  uint8_t header[4];
+  if (!readExact(header, sizeof(header))) {
+    Serial.println("Failed to read image header");
+    client.stop();
+    return;
+  }
+
+  uint16_t width = (uint16_t)header[0] | ((uint16_t)header[1] << 8);
+  uint16_t height = (uint16_t)header[2] | ((uint16_t)header[3] << 8);
+  if (width != screenWidth || height != screenHeight) {
+    Serial.printf("Unsupported image size: %ux%u\n", width, height);
+    client.stop();
+    return;
+  }
+
+  tft.startWrite();
+  tft.setAddrWindow(0, 0, screenWidth, screenHeight);
+
+  for (uint16_t row = 0; row < screenHeight; row += 8) {
+    const uint16_t rows = min((uint16_t)8, (uint16_t)(screenHeight - row));
+    const size_t chunkBytes = (size_t)screenWidth * rows * sizeof(uint16_t);
+    if (!readExact((uint8_t*)imageChunk, chunkBytes)) {
+      tft.endWrite();
+      Serial.println("Failed to read image data");
+      client.stop();
+      return;
+    }
+    tft.pushColors(imageChunk, screenWidth * rows, true);
+  }
+  tft.endWrite();
+
+  Serial.println("Displayed static full-screen image");
+
+  while (true) {
+    delay(1000);
+  }
 }
 
