@@ -130,6 +130,8 @@ void handleImagePacket() {
     return;
   }
 
+  // Keep partially received rows hidden until the complete frame is ready.
+  tft.writecommand(TFT_DISPOFF);
   tft.startWrite();
   tft.setAddrWindow(0, 0, screenWidth, screenHeight);
 
@@ -145,6 +147,7 @@ void handleImagePacket() {
     tft.pushColors(imageChunk, screenWidth * rows, true);
   }
   tft.endWrite();
+  tft.writecommand(TFT_DISPON);
 
   Serial.println("Displayed static full-screen image");
 
