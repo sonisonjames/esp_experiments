@@ -1,11 +1,8 @@
-# GC9A01 TCP Frame Streaming Demo
+# GC9A01 Random Word Demo
 
-This example streams animated frames from a Windows server to an ESP32 display using the GC9A01 round TFT.
+This example sends a new word, position, and color from a Windows Rust server to an ESP32 using the GC9A01 round TFT.
 
-The design is intentionally simple:
-- the Windows machine does all the heavy rendering
-- the ESP32 only receives frame data and pushes it to the TFT
-- the display is updated with full-frame RGB565 images instead of drawLine/drawPixel per object, which avoids flicker
+The server chooses the random word, position, and color. The ESP32 only receives and displays the values every five seconds.
 
 ## Required TFT_eSPI macros
 
@@ -29,57 +26,31 @@ Add these to `C:\Users\sonis\OneDrive\Documents\Arduino\libraries\TFT_eSPI\User_
 
 ## Files in this folder
 
-- `esp32_gc9a01_stream_client.ino` – ESP32 client that receives RGB565 frames and displays them
-- `server/Cargo.toml` – Rust project definition
-- `server/src/main.rs` – Rust server that renders a simple cartoon animation and streams it to the ESP32
+- `esp32_gc9a01_stream_client.ino` - ESP32 random word display sketch
+- `server/` - Rust TCP server
 
-## How it works
+## Protocol
 
-1. The Rust server listens on TCP port `9001`
-2. The ESP32 connects to the Windows machine
-3. The server renders a 240x240 cartoon frame as RGB565
-4. The server sends a small header followed by the pixel payload
-5. The ESP32 calls `tft.pushImage(0, 0, 240, 240, frameBuffer)`
-6. The process repeats for the next frame
+Each text packet contains `TXT1`, text length, message ID, center x/y coordinates, and RGB565 color, followed by the text bytes.
 
-This creates a smooth animation with no flicker from repeated full-screen clears.
+## Server setup
 
-## Windows server run steps
-
-From a terminal in `client_server/server`:
+From `client_server/server`:
 
 ```bash
-cargo run --release
+cargo build --release
+.\target\release\gc9a01_tcp_server.exe random
 ```
 
-The server will listen on `0.0.0.0:9001`.
+The `random` command sends a new word, location, and color every five seconds. Use `random --repeat 10` for ten messages. The server listens on TCP port 9001.
 
-## ESP32 client run steps
+For a fixed-message connection, use `text "Hello"`.
+
+## ESP32 setup
 
 1. Open `esp32_gc9a01_stream_client.ino` in the Arduino IDE
-2. Update WiFi credentials:
+2. Set `ssid`, `password`, and `host` near the top of the sketch.
+3. Upload the sketch to the ESP32 board.
+4. Open Serial Monitor at 115200 baud to see each received word and its position.
 
-```cpp
-const char* ssid = "YOUR_WIFI_NAME";
-const char* password = "YOUR_WIFI_PASSWORD";
-const char* host = "192.168.1.50";
-const int port = 9001;
-```
-
-3. Compile and upload to the ESP32
-4. Power the TFT and ensure the pins match the `User_Setup.h` block above
-5. Run the Rust server on the Windows machine
-
-## Notes
-
-- The server sends one full frame at a time, not per-object drawing commands
-- This is the easiest way to get smooth animation on a small TFT display
-- For a more advanced cartoon scene, replace the simple frame renderer in `server/src/main.rs` with sprite layers or a sprite sheet
-
-## Suggested next step
-
-Replace the simple cartoon face in the Rust server with:
-- a Cuphead-inspired character
-- parallax background layers
-- animated eyes, mouth, and body
-- comic-style shadows and outlines
+Start the server before or after the ESP32; the client retries the TCP connection once per second.

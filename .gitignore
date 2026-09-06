@@ -1,0 +1,23 @@
+# Rust and other Cargo build output
+**/target/
+
+# Arduino and PlatformIO generated output
+**/.pio/
+**/build/
+**/out/
+
+# Compiled firmware and intermediate object files
+*.o
+*.a
+*.elf
+*.bin
+*.hex
+*.map
+*.uf2
+
+# Temporary editor and build files
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
